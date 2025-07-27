@@ -2,232 +2,210 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8"/>
-  <title>신청 사이트</title>
-  <!-- Tailwind CSS CDN -->
+  <title>NICU Wanted Off</title>
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 text-gray-800">
 
-  <div class="max-w-lg mx-auto p-4">
-    <h1 class="text-3xl font-bold text-center mb-6">신청 사이트</h1>
+  <div class="max-w-4xl mx-auto p-4 grid grid-cols-1 lg:grid-cols-4 gap-4">
+    <!-- 좌측: 인증 & 달력 -->
+    <div class="lg:col-span-3 space-y-6">
+      <h1 class="text-3xl font-bold text-center">신청 사이트</h1>
 
-    <!-- 회원가입 / 로그인 영역 -->
-    <div id="auth" class="space-y-4">
-      <div class="flex justify-center gap-4">
-        <button id="showLogin" class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow">로그인</button>
-        <button id="showRegister" class="px-4 py-2 bg-green-600 text-white rounded-lg shadow">회원가입</button>
+      <!-- 인증 -->
+      <div id="auth" class="space-y-4">
+        <div class="flex justify-center gap-4">
+          <button id="showLogin" class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow">로그인</button>
+          <button id="showRegister" class="px-4 py-2 bg-green-600 text-white rounded-lg shadow">회원가입</button>
+        </div>
+        <form id="formLogin" class="space-y-3 hidden bg-white p-4 rounded-lg shadow">
+          <h2 class="text-xl font-semibold">로그인</h2>
+          <input id="loginName" placeholder="이름" required class="w-full px-3 py-2 border rounded-lg"/>
+          <input id="loginPw" type="password" placeholder="비밀번호" required class="w-full px-3 py-2 border rounded-lg"/>
+          <button type="submit" class="w-full py-2 bg-blue-600 text-white rounded-lg">로그인</button>
+        </form>
+        <form id="formRegister" class="space-y-3 hidden bg-white p-4 rounded-lg shadow">
+          <h2 class="text-xl font-semibold">회원가입</h2>
+          <input id="regName" placeholder="이름" required class="w-full px-3 py-2 border rounded-lg"/>
+          <input id="regPw" type="password" placeholder="비밀번호" required class="w-full px-3 py-2 border rounded-lg"/>
+          <button type="submit" class="w-full py-2 bg-green-600 text-white rounded-lg">회원가입</button>
+        </form>
       </div>
 
-      <!-- 로그인 폼 -->
-      <form id="formLogin" class="space-y-3 hidden bg-white p-4 rounded-lg shadow">
-        <h2 class="text-xl font-semibold">로그인</h2>
-        <input id="loginName" placeholder="이름" required
-               class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"/>
-        <input id="loginPw" type="password" placeholder="비밀번호" required
-               class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"/>
-        <button type="submit" class="w-full py-2 bg-blue-600 text-white rounded-lg">로그인</button>
-      </form>
-
-      <!-- 회원가입 폼 -->
-      <form id="formRegister" class="space-y-3 hidden bg-white p-4 rounded-lg shadow">
-        <h2 class="text-xl font-semibold">회원가입</h2>
-        <input id="regName" placeholder="이름" required
-               class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"/>
-        <input id="regPw" type="password" placeholder="비밀번호" required
-               class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"/>
-        <button type="submit" class="w-full py-2 bg-green-600 text-white rounded-lg">회원가입</button>
-      </form>
+      <!-- 달력 + 신청 -->
+      <div id="app" class="hidden space-y-4">
+        <div class="flex justify-between items-center">
+          <span id="welcome" class="text-lg font-medium"></span>
+          <button id="logout" class="px-3 py-1 bg-red-500 text-white rounded-lg shadow">로그아웃</button>
+        </div>
+        <div class="flex justify-between items-center">
+          <button id="prev" class="px-3 py-1 bg-gray-300 rounded-lg">‹ 이전</button>
+          <span id="monthLabel" class="text-lg font-semibold"></span>
+          <button id="next" class="px-3 py-1 bg-gray-300 rounded-lg">다음 ›</button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full bg-white rounded-lg shadow">
+            <thead class="bg-blue-100">
+              <tr>
+                <th class="py-2">일</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th>
+              </tr>
+            </thead>
+            <tbody id="calendar" class="divide-y"></tbody>
+          </table>
+        </div>
+        <!-- 선택된 날짜 및 버튼 -->
+        <div class="flex items-center space-x-4">
+          <span>선택된 날짜: <strong id="selectedDate">없음</strong></span>
+          <button id="applyBtn" class="px-4 py-2 bg-blue-500 text-white rounded-lg disabled:opacity-50" disabled>
+            신청하기
+          </button>
+        </div>
+      </div>
     </div>
 
-    <!-- 달력 및 신청 영역 -->
-    <div id="app" class="hidden">
-      <div class="flex justify-between items-center mb-4">
-        <span id="welcome" class="text-lg font-medium"></span>
-        <button id="logout" class="px-3 py-1 bg-red-500 text-white rounded-lg shadow">로그아웃</button>
-      </div>
-
-      <!-- 월 이동 네비게이션 -->
-      <div id="nav" class="flex justify-between items-center mb-2">
-        <button id="prev" class="px-3 py-1 bg-gray-300 rounded-lg">‹ 이전</button>
-        <span id="monthLabel" class="text-lg font-semibold"></span>
-        <button id="next" class="px-3 py-1 bg-gray-300 rounded-lg">다음 ›</button>
-      </div>
-
-      <!-- 달력 테이블 -->
-      <div class="overflow-x-auto">
-        <table class="min-w-full bg-white rounded-lg shadow">
-          <thead class="bg-blue-100">
-            <tr>
-              <th class="py-2">일</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th>
-            </tr>
-          </thead>
-          <tbody id="calendar" class="divide-y"></tbody>
-        </table>
-      </div>
+    <!-- 우측: 내 신청 내역 -->
+    <div class="space-y-4">
+      <h2 class="text-xl font-semibold">내 신청 내역</h2>
+      <ul id="myList" class="bg-white p-4 rounded-lg shadow space-y-2">
+        <!-- JS로 채워집니다 -->
+      </ul>
     </div>
   </div>
 
   <script>
-    // --- 로컬스토리지 유틸 ---
-    function getUsers() { return JSON.parse(localStorage.getItem('app_users') || '[]'); }
-    function saveUsers(u) { localStorage.setItem('app_users', JSON.stringify(u)); }
-    function getData() { return JSON.parse(localStorage.getItem('app_data') || '{}'); }
-    function saveData(d) { localStorage.setItem('app_data', JSON.stringify(d)); }
+    // 로컬스토리지 유틸
+    function getUsers() { return JSON.parse(localStorage.getItem('app_users')||'[]'); }
+    function saveUsers(u){ localStorage.setItem('app_users', JSON.stringify(u)); }
+    function getData() { return JSON.parse(localStorage.getItem('app_data')||'{}'); }
+    function saveData(d){ localStorage.setItem('app_data', JSON.stringify(d)); }
 
-    // --- 화면 요소 참조 ---
+    // 요소 참조
     const authDiv      = document.getElementById('auth'),
           formLogin    = document.getElementById('formLogin'),
           formRegister = document.getElementById('formRegister'),
           appDiv       = document.getElementById('app'),
-          welcome      = document.getElementById('welcome');
+          welcome      = document.getElementById('welcome'),
+          calBody      = document.getElementById('calendar'),
+          monthLabel   = document.getElementById('monthLabel'),
+          selDateEl    = document.getElementById('selectedDate'),
+          applyBtn     = document.getElementById('applyBtn'),
+          myList       = document.getElementById('myList');
 
-    // --- 현재 로그인 유저 ---
-    let currentUser = localStorage.getItem('app_current') || '';
+    let currentUser = localStorage.getItem('app_current')||'';
+    let cur = new Date();
+    let selectedDate = '';
 
-    // --- 뷰 전환 함수 ---
-    function showAuth() {
-      authDiv.style.display       = 'block';
-      appDiv.style.display        = 'none';
-      formLogin.style.display     = 'none';
-      formRegister.style.display  = 'none';
-    }
-    function showLogin()  { showAuth(); formLogin.style.display    = 'block'; }
-    function showReg()    { showAuth(); formRegister.style.display = 'block'; }
-    function showApp() {
-      if (!currentUser) return showLogin();
-      authDiv.style.display = 'none';
-      appDiv.style.display  = 'block';
-      welcome.textContent   = currentUser + '님 환영합니다';
-      renderCalendar();
+    // 뷰 전환
+    function showAuth(){ authDiv.classList.remove('hidden'); appDiv.classList.add('hidden'); }
+    function showApp(){ 
+      if(!currentUser) return showAuth();
+      authDiv.classList.add('hidden'); appDiv.classList.remove('hidden');
+      welcome.textContent = currentUser + '님 환영';
+      renderCalendar(); renderMyList();
     }
 
-    // --- 이벤트 바인딩 ---
-    document.getElementById('showLogin').onclick    = showLogin;
-    document.getElementById('showRegister').onclick = showReg;
+    document.getElementById('showLogin').onclick = ()=>{ formLogin.classList.remove('hidden'); formRegister.classList.add('hidden'); showAuth(); }
+    document.getElementById('showRegister').onclick = ()=>{ formRegister.classList.remove('hidden'); formLogin.classList.add('hidden'); showAuth(); }
 
-    // --- 회원가입 처리 ---
-    formRegister.onsubmit = e => {
+    // 회원가입
+    formRegister.onsubmit = e=>{
       e.preventDefault();
       const name = document.getElementById('regName').value.trim(),
             pw   = document.getElementById('regPw').value;
       let users = getUsers();
-      if (users.find(u => u.name === name)) {
-        alert('이미 존재하는 이름입니다');
-        return;
-      }
-      users.push({ name, pw });
-      saveUsers(users);
-      alert('회원가입 완료! 로그인 해주세요');
-      showLogin();
+      if(users.find(u=>u.name===name)){ alert('이미 존재'); return; }
+      users.push({name,pw}); saveUsers(users);
+      alert('가입 완료'); formRegister.classList.add('hidden'); formLogin.classList.remove('hidden');
     };
-
-    // --- 로그인 처리 ---
-    formLogin.onsubmit = e => {
+    // 로그인
+    formLogin.onsubmit = e=>{
       e.preventDefault();
       const name = document.getElementById('loginName').value.trim(),
             pw   = document.getElementById('loginPw').value;
-      const users = getUsers(),
-            u     = users.find(u => u.name === name && u.pw === pw);
-      if (!u) {
-        alert('이름 또는 비밀번호가 틀렸습니다');
-        return;
-      }
-      currentUser = name;
-      localStorage.setItem('app_current', currentUser);
+      const u = getUsers().find(u=>u.name===name&&u.pw===pw);
+      if(!u){ alert('실패'); return; }
+      currentUser=name; localStorage.setItem('app_current',name);
       showApp();
     };
-
-    // --- 로그아웃 ---
-    document.getElementById('logout').onclick = () => {
-      localStorage.removeItem('app_current');
-      currentUser = '';
-      showAuth();
+    // 로그아웃
+    document.getElementById('logout').onclick = ()=>{
+      localStorage.removeItem('app_current'); currentUser=''; showAuth();
     };
 
-    // 초기 뷰 결정
-    if (currentUser) showApp();
-    else showLogin();
+    // 네비
+    document.getElementById('prev').onclick = ()=>{ cur.setMonth(cur.getMonth()-1); renderCalendar(); }
+    document.getElementById('next').onclick = ()=>{ cur.setMonth(cur.getMonth()+1); renderCalendar(); }
 
-    // --- 달력 네비게이션 ---
-    let cur = new Date();
-    document.getElementById('prev').onclick = () => { cur.setMonth(cur.getMonth() - 1); renderCalendar(); };
-    document.getElementById('next').onclick = () => { cur.setMonth(cur.getMonth() + 1); renderCalendar(); };
+    // 신청 버튼
+    applyBtn.onclick = ()=>{
+      if(!selectedDate) return;
+      const d=getData(), arr=d[selectedDate]||[];
+      if(arr.length>=3||arr.includes(currentUser)) return;
+      arr.push(currentUser); d[selectedDate]=arr; saveData(d);
+      selectedDate=''; updateSelection(); renderCalendar(); renderMyList();
+    };
 
-    // --- 달력 렌더링 ---
-    function renderCalendar() {
-      const tb = document.getElementById('calendar');
-      tb.innerHTML = '';
-      const year = cur.getFullYear(),
-            mon  = cur.getMonth();
-      document.getElementById('monthLabel').textContent = `${year}년 ${mon + 1}월`;
-
-      const firstDay = new Date(year, mon, 1).getDay(),
-            days     = new Date(year, mon + 1, 0).getDate();
-      let row = document.createElement('tr');
-
-      // 빈 셀
-      for (let i = 0; i < firstDay; i++) {
-        const td = document.createElement('td');
-        td.classList.add('disabled');
-        row.appendChild(td);
+    // 달력 그리기
+    function renderCalendar(){
+      calBody.innerHTML='';
+      monthLabel.textContent = `${cur.getFullYear()}년 ${cur.getMonth()+1}월`;
+      const first=new Date(cur.getFullYear(),cur.getMonth(),1).getDay();
+      const days=new Date(cur.getFullYear(),cur.getMonth()+1,0).getDate();
+      let row=document.createElement('tr');
+      for(let i=0;i<first;i++){ row.appendChild(makeCell('',true)); }
+      const data=getData();
+      for(let d=1;d<=days;d++){
+        if((first+d-1)%7===0&&d!==1){ calBody.appendChild(row); row=document.createElement('tr'); }
+        const ds=`${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        row.appendChild(makeCell(d, false, ds, data[ds]||[]));
       }
-
-      const data = getData();
-      // 날짜 셀
-      for (let d = 1; d <= days; d++) {
-        if ((firstDay + d - 1) % 7 === 0 && d !== 1) {
-          tb.appendChild(row);
-          row = document.createElement('tr');
-        }
-        const dateStr = `${year}-${String(mon + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-        const td      = document.createElement('td');
-        td.innerHTML  = `<div>${d}</div><div class="count">${(data[dateStr] || []).length}/3</div>`;
-
-        const arr = data[dateStr] || [];
-        if (arr.includes(currentUser)) {
-          td.classList.add('active');
-          td.onclick = () => cancel(dateStr);
-        } else if (arr.length < 3) {
-          td.classList.add('active');
-          td.onclick = () => apply(dateStr);
-        } else {
-          td.classList.add('disabled');
-        }
-        row.appendChild(td);
-      }
-
-      // 마지막 빈 셀
-      while (row.children.length < 7) {
-        const td = document.createElement('td');
-        td.classList.add('disabled');
-        row.appendChild(td);
-      }
-      tb.appendChild(row);
+      while(row.children.length<7){ row.appendChild(makeCell('',true)); }
+      calBody.appendChild(row);
+      updateSelection();
     }
 
-    // --- 신청 처리 ---
-    function apply(dateStr) {
-      const data = getData(),
-            arr  = data[dateStr] || [];
-      if (arr.includes(currentUser)) {
-        alert('이미 신청함');
-        return;
+    function makeCell(day, disabled=false, ds='', arr=[]){
+      const td=document.createElement('td');
+      td.className = disabled?'disabled':'';
+      td.classList.add('p-2','text-center','align-top');
+      if(!disabled&&day){
+        td.classList.add('active','hover:bg-blue-50','cursor-pointer');
+        td.onclick = ()=>{ selectedDate=ds; updateSelection(); };
       }
-      arr.push(currentUser);
-      data[dateStr] = arr;
-      saveData(data);
-      renderCalendar();
+      td.innerHTML = disabled?'':`<div>${day}</div><div class="count text-sm text-gray-600">${arr.length}/3</div>`;
+      return td;
     }
 
-    // --- 취소 처리 ---
-    function cancel(dateStr) {
-      if (!confirm('신청을 취소하시겠습니까?')) return;
-      const data = getData();
-      data[dateStr] = data[dateStr].filter(n => n !== currentUser);
-      if (data[dateStr].length === 0) delete data[dateStr];
-      saveData(data);
-      renderCalendar();
+    function updateSelection(){
+      selDateEl.textContent = selectedDate||'없음';
+      applyBtn.disabled = !selectedDate;
+      // 음영 표시
+      document.querySelectorAll('#calendar td').forEach(td=>td.classList.remove('bg-blue-200'));
+      if(selectedDate){
+        document.querySelectorAll('#calendar td').forEach(td=>{
+          if(td.innerText.trim().startsWith(selectedDate.split('-')[2])) {
+            td.classList.add('bg-blue-200');
+          }
+        });
+      }
     }
+
+    // 내 신청 내역
+    function renderMyList(){
+      myList.innerHTML = '';
+      const todayData = getData();
+      Object.keys(todayData).filter(date=>
+        todayData[date].includes(currentUser)
+      ).sort().forEach(date=>{
+        const li=document.createElement('li');
+        li.textContent = date;
+        myList.appendChild(li);
+      });
+    }
+
+    // 초기 뷰
+    if(currentUser) showApp(); else showAuth();
   </script>
 </body>
 </html>
