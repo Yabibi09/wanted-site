@@ -69,18 +69,10 @@
 
   <script>
     // --- 로컬스토리지 유틸 ---
-    function getUsers() { 
-      return JSON.parse(localStorage.getItem('app_users') || '[]'); 
-    }
-    function saveUsers(u) { 
-      localStorage.setItem('app_users', JSON.stringify(u)); 
-    }
-    function getData() { 
-      return JSON.parse(localStorage.getItem('app_data') || '{}'); 
-    }
-    function saveData(d) { 
-      localStorage.setItem('app_data', JSON.stringify(d)); 
-    }
+    function getUsers() { return JSON.parse(localStorage.getItem('app_users') || '[]'); }
+    function saveUsers(u) { localStorage.setItem('app_users', JSON.stringify(u)); }
+    function getData() { return JSON.parse(localStorage.getItem('app_data') || '{}'); }
+    function saveData(d) { localStorage.setItem('app_data', JSON.stringify(d)); }
 
     // --- 화면 요소 참조 ---
     const authDiv      = document.getElementById('auth'),
@@ -99,14 +91,8 @@
       formLogin.style.display     = 'none';
       formRegister.style.display  = 'none';
     }
-    function showLogin() {
-      showAuth();
-      formLogin.style.display = 'block';
-    }
-    function showReg() {
-      showAuth();
-      formRegister.style.display = 'block';
-    }
+    function showLogin()  { showAuth(); formLogin.style.display    = 'block'; }
+    function showReg()    { showAuth(); formRegister.style.display = 'block'; }
     function showApp() {
       if (!currentUser) return showLogin();
       authDiv.style.display = 'none';
@@ -115,7 +101,7 @@
       renderCalendar();
     }
 
-    // --- 버튼 이벤트 바인딩 ---
+    // --- 이벤트 바인딩 ---
     document.getElementById('showLogin').onclick    = showLogin;
     document.getElementById('showRegister').onclick = showReg;
 
@@ -158,24 +144,18 @@
       showAuth();
     };
 
-    // 초기화: 로그인 상태에 따라 뷰 설정
+    // 초기 뷰 결정
     if (currentUser) showApp();
     else showLogin();
 
     // --- 달력 네비게이션 ---
     let cur = new Date();
-    document.getElementById('prev').onclick = () => {
-      cur.setMonth(cur.getMonth() - 1);
-      renderCalendar();
-    };
-    document.getElementById('next').onclick = () => {
-      cur.setMonth(cur.getMonth() + 1);
-      renderCalendar();
-    };
+    document.getElementById('prev').onclick = () => { cur.setMonth(cur.getMonth() - 1); renderCalendar(); };
+    document.getElementById('next').onclick = () => { cur.setMonth(cur.getMonth() + 1); renderCalendar(); };
 
     // --- 달력 렌더링 ---
     function renderCalendar() {
-      const tb   = document.getElementById('calendar');
+      const tb = document.getElementById('calendar');
       tb.innerHTML = '';
       const year = cur.getFullYear(),
             mon  = cur.getMonth();
@@ -185,7 +165,7 @@
             days     = new Date(year, mon + 1, 0).getDate();
       let row = document.createElement('tr');
 
-      // 빈 셀 채우기
+      // 빈 셀
       for (let i = 0; i < firstDay; i++) {
         const td = document.createElement('td');
         td.classList.add('disabled');
@@ -193,7 +173,7 @@
       }
 
       const data = getData();
-      // 날짜 셀 생성
+      // 날짜 셀
       for (let d = 1; d <= days; d++) {
         if ((firstDay + d - 1) % 7 === 0 && d !== 1) {
           tb.appendChild(row);
@@ -201,7 +181,7 @@
         }
         const dateStr = `${year}-${String(mon + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
         const td      = document.createElement('td');
-        td.innerHTML  = `<div>${d}</div><div class="count">${(data[dateStr]||[]).length}/3</div>`;
+        td.innerHTML  = `<div>${d}</div><div class="count">${(data[dateStr] || []).length}/3</div>`;
 
         const arr = data[dateStr] || [];
         if (arr.includes(currentUser)) {
@@ -216,7 +196,7 @@
         row.appendChild(td);
       }
 
-      // 마지막 빈 셀 채우기
+      // 마지막 빈 셀
       while (row.children.length < 7) {
         const td = document.createElement('td');
         td.classList.add('disabled');
@@ -241,7 +221,7 @@
 
     // --- 취소 처리 ---
     function cancel(dateStr) {
-      if (!confirm('취소할까요?')) return;
+      if (!confirm('신청을 취소하시겠습니까?')) return;
       const data = getData();
       data[dateStr] = data[dateStr].filter(n => n !== currentUser);
       if (data[dateStr].length === 0) delete data[dateStr];
@@ -249,3 +229,5 @@
       renderCalendar();
     }
   </script>
+</body>
+</html>
