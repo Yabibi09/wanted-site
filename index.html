@@ -1,78 +1,19 @@
-<body class="bg-gray-50 text-gray-800">
-  <div class="container mx-auto p-6">
-    <!-- 인증 영역 -->
-    <div id="auth" class="max-w-md mx-auto bg-white p-6 rounded-2xl shadow-lg space-y-6">
-      <h1 class="text-2xl font-bold text-center">❤️ NICU wanted off ❤️</h1>
-      <div class="flex justify-center gap-4">
-        <button id="showLogin" class="btn btn-primary">로그인</button>
-        <button id="showRegister" class="btn btn-secondary">회원가입</button>
-      </div>
-
-      <form id="formLogin" class="hidden space-y-4">
-        <h2 class="text-xl font-semibold">로그인</h2>
-        <input id="loginName" placeholder="이름" class="input" />
-        <input id="loginPw" type="password" placeholder="비밀번호" class="input" />
-        <button type="submit" class="btn btn-primary w-full">로그인</button>
-      </form>
-
-      <form id="formRegister" class="hidden space-y-4">
-        <h2 class="text-xl font-semibold">회원가입</h2>
-        <input id="regName" placeholder="이름(Whitelist)" class="input" />
-        <input id="regPw" type="password" placeholder="비밀번호" class="input" />
-        <button type="submit" class="btn btn-secondary w-full">회원가입</button>
-      </form>
-    </div>
-
-    <!-- 메인 앱 영역 -->
-    <div id="app" class="hidden mt-8 space-y-6">
-      <div class="flex justify-between items-center bg-white p-4 rounded-2xl shadow-lg">
-        <span id="welcome" class="text-lg font-medium"></span>
-        <button id="logout" class="btn btn-danger">로그아웃</button>
-      </div>
-
-      <div class="bg-white p-4 rounded-2xl shadow-lg space-y-4">
-        <div class="flex justify-between items-center">
-          <span id="timer" class="text-sm text-gray-500">남은 시간: --:--</span>
-        </div>
-        <div class="flex justify-between items-center">
-          <button id="prev" class="btn">‹ 이전</button>
-          <span id="monthLabel" class="text-lg font-semibold"></span>
-          <button id="next" class="btn">다음 ›</button>
-        </div>
-
-        <div class="overflow-x-auto">
-          <table class="w-full text-center">
-            <thead>
-              <tr class="bg-blue-100 rounded-t-2xl">
-                <th class="py-2">일</th>
-                <th class="py-2">월</th>
-                <th class="py-2">화</th>
-                <th class="py-2">수</th>
-                <th class="py-2">목</th>
-                <th class="py-2">금</th>
-                <th class="py-2">토</th>
-              </tr>
-            </thead>
-            <tbody id="calendar" class="divide-y"></tbody>
-          </table>
-        </div>
-
-        <div class="flex justify-between items-center">
-          <div>
-            선택된 날짜 (<span id="selCount">0</span>/3):
-            <strong id="selectedDates">없음</strong>
-          </div>
-          <button id="applyBtn" class="btn btn-primary disabled:btn-disabled" disabled>
-            신청하기
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 신청내역 -->
-    <div id="history" class="hidden mt-8 bg-white p-6 rounded-2xl shadow-lg">
-      <h2 class="text-xl font-semibold mb-4">신청내역</h2>
-      <ul id="myList" class="space-y-2"></ul>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>❤️ NICU wanted off ❤️</title>
+  <link href="css/styles.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans">
+  <!-- 메인 로그인 화면 -->
+  <div class="min-h-screen flex flex-col justify-center items-center bg-gradient-to-br from-pink-100 via-purple-100 to-indigo-100">
+    <h1 class="text-4xl font-extrabold mb-8">❤️ NICU wanted off ❤️</h1>
+    <div class="flex space-x-6">
+      <button id="showLogin" class="btn-bubble bg-pink-400 hover:bg-pink-500">로그인</button>
+      <button id="showRegister" class="btn-bubble bg-purple-400 hover:bg-purple-500">회원가입</button>
     </div>
   </div>
+  <script src="js/main.js"></script>
 </body>
+</html>
