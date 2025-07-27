@@ -2,8 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8"/>
-  <title>신청 사이틍</title>
-  <!-- Tailwind CSS -->
+  <title>❤️ NICU wanted off ❤️</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 text-gray-800">
@@ -11,7 +10,7 @@
   <div class="max-w-4xl mx-auto p-4 grid grid-cols-1 lg:grid-cols-4 gap-4">
     <!-- 좌측: 인증 & 달력 -->
     <div class="lg:col-span-3 space-y-6">
-      <h1 class="text-3xl font-bold text-center">NICU Wanted Off</h1>
+      <h1 class="text-3xl font-bold text-center">❤️ NICU wanted off ❤️</h1>
 
       <!-- 인증 -->
       <div id="auth" class="space-y-4">
@@ -33,7 +32,7 @@
         </form>
       </div>
 
-      <!-- 달력 + 신청 -->
+      <!-- 달력 & 신청 -->
       <div id="app" class="hidden space-y-4">
         <div class="flex justify-between items-center">
           <span id="welcome" class="text-lg font-medium"></span>
@@ -54,9 +53,8 @@
             <tbody id="calendar" class="divide-y"></tbody>
           </table>
         </div>
-        <!-- 선택된 날짜 및 버튼 -->
         <div class="flex items-center space-x-4">
-          <span>선택된 날짜: <strong id="selectedDate">없음</strong></span>
+          <span>선택된 날짜 (<span id="selCount">0</span>/3): <strong id="selectedDates">없음</strong></span>
           <button id="applyBtn" class="px-4 py-2 bg-blue-500 text-white rounded-lg disabled:opacity-50" disabled>
             신청하기
           </button>
@@ -74,13 +72,13 @@
   </div>
 
   <script>
-    // 로컬스토리지 유틸
+    // --- 로컬스토리지 유틸 ---
     function getUsers() { return JSON.parse(localStorage.getItem('app_users')||'[]'); }
     function saveUsers(u){ localStorage.setItem('app_users', JSON.stringify(u)); }
-    function getData() { return JSON.parse(localStorage.getItem('app_data')||'{}'); }
-    function saveData(d){ localStorage.setItem('app_data', JSON.stringify(d)); }
+    function getData()    { return JSON.parse(localStorage.getItem('app_data')||'{}'); }
+    function saveData(d)  { localStorage.setItem('app_data', JSON.stringify(d)); }
 
-    // 요소 참조
+    // --- 요소 참조 ---
     const authDiv      = document.getElementById('auth'),
           formLogin    = document.getElementById('formLogin'),
           formRegister = document.getElementById('formRegister'),
@@ -88,25 +86,27 @@
           welcome      = document.getElementById('welcome'),
           calBody      = document.getElementById('calendar'),
           monthLabel   = document.getElementById('monthLabel'),
-          selDateEl    = document.getElementById('selectedDate'),
+          selDatesEl   = document.getElementById('selectedDates'),
+          selCountEl   = document.getElementById('selCount'),
           applyBtn     = document.getElementById('applyBtn'),
           myList       = document.getElementById('myList');
 
-    let currentUser = localStorage.getItem('app_current')||'';
-    let cur = new Date();
-    let selectedDate = '';
+    let currentUser = localStorage.getItem('app_current')||'',
+        cur         = new Date(),
+        selected    = [];  // 선택된 날짜 리스트
 
     // 뷰 전환
     function showAuth(){ authDiv.classList.remove('hidden'); appDiv.classList.add('hidden'); }
-    function showApp(){ 
+    function showApp(){
       if(!currentUser) return showAuth();
       authDiv.classList.add('hidden'); appDiv.classList.remove('hidden');
       welcome.textContent = currentUser + '님 환영';
-      renderCalendar(); renderMyList();
+      renderCalendar(); renderMyList(); updateSelectionUI();
     }
 
-    document.getElementById('showLogin').onclick = ()=>{ formLogin.classList.remove('hidden'); formRegister.classList.add('hidden'); showAuth(); }
-    document.getElementById('showRegister').onclick = ()=>{ formRegister.classList.remove('hidden'); formLogin.classList.add('hidden'); showAuth(); }
+    // 인증 버튼
+    document.getElementById('showLogin').onclick    = ()=>{ formLogin.classList.remove('hidden'); formRegister.classList.add('hidden'); showAuth(); };
+    document.getElementById('showRegister').onclick = ()=>{ formRegister.classList.remove('hidden'); formLogin.classList.add('hidden'); showAuth(); };
 
     // 회원가입
     formRegister.onsubmit = e=>{
@@ -125,7 +125,7 @@
             pw   = document.getElementById('loginPw').value;
       const u = getUsers().find(u=>u.name===name&&u.pw===pw);
       if(!u){ alert('실패'); return; }
-      currentUser=name; localStorage.setItem('app_current',name);
+      currentUser = name; localStorage.setItem('app_current',name);
       showApp();
     };
     // 로그아웃
@@ -134,77 +134,103 @@
     };
 
     // 네비
-    document.getElementById('prev').onclick = ()=>{ cur.setMonth(cur.getMonth()-1); renderCalendar(); }
-    document.getElementById('next').onclick = ()=>{ cur.setMonth(cur.getMonth()+1); renderCalendar(); }
+    document.getElementById('prev').onclick = ()=>{ cur.setMonth(cur.getMonth()-1); renderCalendar(); };
+    document.getElementById('next').onclick = ()=>{ cur.setMonth(cur.getMonth()+1); renderCalendar(); };
 
     // 신청 버튼
     applyBtn.onclick = ()=>{
-      if(!selectedDate) return;
-      const d=getData(), arr=d[selectedDate]||[];
-      if(arr.length>=3||arr.includes(currentUser)) return;
-      arr.push(currentUser); d[selectedDate]=arr; saveData(d);
-      selectedDate=''; updateSelection(); renderCalendar(); renderMyList();
+      const data = getData();
+      selected.forEach(dateStr=>{
+        const arr = data[dateStr]||[];
+        if(arr.length<3 && !arr.includes(currentUser)) arr.push(currentUser);
+        data[dateStr] = arr;
+      });
+      saveData(data);
+      selected = [];
+      renderCalendar(); renderMyList(); updateSelectionUI();
     };
 
-    // 달력 그리기
+    // 달력 렌더링
     function renderCalendar(){
       calBody.innerHTML='';
       monthLabel.textContent = `${cur.getFullYear()}년 ${cur.getMonth()+1}월`;
-      const first=new Date(cur.getFullYear(),cur.getMonth(),1).getDay();
-      const days=new Date(cur.getFullYear(),cur.getMonth()+1,0).getDate();
-      let row=document.createElement('tr');
-      for(let i=0;i<first;i++){ row.appendChild(makeCell('',true)); }
-      const data=getData();
-      for(let d=1;d<=days;d++){
-        if((first+d-1)%7===0&&d!==1){ calBody.appendChild(row); row=document.createElement('tr'); }
-        const ds=`${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-        row.appendChild(makeCell(d, false, ds, data[ds]||[]));
+      const firstDay = new Date(cur.getFullYear(),cur.getMonth(),1).getDay(),
+            days     = new Date(cur.getFullYear(),cur.getMonth()+1,0).getDate();
+      let row = document.createElement('tr');
+
+      // 빈칸
+      for(let i=0;i<firstDay;i++) row.appendChild(makeCell('',true));
+
+      const data = getData();
+      for(let d=1; d<=days; d++){
+        if((firstDay+d-1)%7===0 && d!==1){
+          calBody.appendChild(row);
+          row = document.createElement('tr');
+        }
+        const ds  = `${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`,
+              arr = data[ds]||[];
+        row.appendChild(makeCell(d,false,ds,arr));
       }
-      while(row.children.length<7){ row.appendChild(makeCell('',true)); }
+      while(row.children.length<7) row.appendChild(makeCell('',true));
       calBody.appendChild(row);
-      updateSelection();
+      updateSelectionUI();
     }
 
+    // 셀 생성
     function makeCell(day, disabled=false, ds='', arr=[]){
-      const td=document.createElement('td');
-      td.className = disabled?'disabled':'';
-      td.classList.add('p-2','text-center','align-top');
-      if(!disabled&&day){
-        td.classList.add('active','hover:bg-blue-50','cursor-pointer');
-        td.onclick = ()=>{ selectedDate=ds; updateSelection(); };
+      const td = document.createElement('td');
+      td.className = disabled ? 'disabled p-2' : 'p-2';
+      if(!disabled && day){
+        td.classList.add('cursor-pointer','hover:bg-blue-50');
+        td.onclick = ()=>toggleSelect(ds);
       }
-      td.innerHTML = disabled?'':`<div>${day}</div><div class="count text-sm text-gray-600">${arr.length}/3</div>`;
+      td.innerHTML = disabled ? '' :
+        `<div>${day}</div><div class="count text-sm text-gray-600">${arr.length}/3</div>`;
       return td;
     }
 
-    function updateSelection(){
-      selDateEl.textContent = selectedDate||'없음';
-      applyBtn.disabled = !selectedDate;
-      // 음영 표시
-      document.querySelectorAll('#calendar td').forEach(td=>td.classList.remove('bg-blue-200'));
-      if(selectedDate){
-        document.querySelectorAll('#calendar td').forEach(td=>{
-          if(td.innerText.trim().startsWith(selectedDate.split('-')[2])) {
-            td.classList.add('bg-blue-200');
-          }
-        });
-      }
+    // 선택 토글
+    function toggleSelect(ds){
+      const idx = selected.indexOf(ds);
+      if(idx>=0) selected.splice(idx,1);
+      else if(selected.length<3) selected.push(ds);
+      updateSelectionUI();
     }
 
-    // 내 신청 내역
+    // 선택 UI 업데이트
+    function updateSelectionUI(){
+      document.querySelectorAll('#calendar td').forEach(td=>td.classList.remove('bg-blue-200'));
+      selected.forEach(ds=>{
+        document.querySelectorAll('#calendar td').forEach(td=>{
+          if(td.innerText.startsWith(String(Number(ds.slice(-2))))) td.classList.add('bg-blue-200');
+        });
+      });
+      selDatesEl.textContent = selected.join(', ')||'없음';
+      selCountEl.textContent  = selected.length;
+      applyBtn.disabled       = selected.length===0;
+    }
+
+    // 내 신청 내역 렌더
     function renderMyList(){
       myList.innerHTML = '';
-      const todayData = getData();
-      Object.keys(todayData).filter(date=>
-        todayData[date].includes(currentUser)
-      ).sort().forEach(date=>{
-        const li=document.createElement('li');
-        li.textContent = date;
-        myList.appendChild(li);
-      });
+      const data = getData();
+      Object.keys(data).filter(date=>data[date].includes(currentUser))
+        .sort().forEach(date=>{
+          const li = document.createElement('li');
+          li.className = 'flex justify-between items-center';
+          li.innerHTML = `<span>${date}</span><button class="text-red-500">X</button>`;
+          li.querySelector('button').onclick = ()=>{
+            if(!confirm('취소할까요?')) return;
+            data[date] = data[date].filter(n=>n!==currentUser);
+            if(data[date].length===0) delete data[date];
+            saveData(data);
+            renderCalendar(); renderMyList();
+          };
+          myList.appendChild(li);
+        });
     }
 
-    // 초기 뷰
+    // 초기화
     if(currentUser) showApp(); else showAuth();
   </script>
 </body>
