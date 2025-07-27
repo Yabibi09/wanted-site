@@ -1,3 +1,71 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* === 커스텀 스타일 === */
+
+/* 버튼 그림자와 호버 효과 강화 */
+.btn {
+  @apply rounded-lg shadow transition duration-200;
+}
+.btn-primary {
+  @apply bg-blue-600 text-white hover:bg-blue-700;
+}
+.btn-secondary {
+  @apply bg-green-600 text-white hover:bg-green-700;
+}
+.btn-danger {
+  @apply bg-red-500 text-white hover:bg-red-600;
+}
+.btn-disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+/* 입력 폼 스타일 */
+.input {
+  @apply w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400;
+}
+
+/* 달력 셀 */
+.calendar-cell {
+  @apply p-2 text-center align-top;
+}
+.calendar-cell-disabled {
+  @apply bg-gray-100 text-gray-400;
+}
+.calendar-cell-active {
+  @apply cursor-pointer hover:bg-blue-50;
+}
+.calendar-cell-selected {
+  @apply bg-blue-200;
+}
+.calendar-cell-booked {
+  @apply bg-red-100;
+}
+
+/* 레이아웃 컨테이너 */
+.container {
+  @apply max-w-4xl mx-auto p-4 grid grid-cols-1 lg:grid-cols-4 gap-4;
+}
+.auth-pane {
+  @apply space-y-4;
+}
+.app-pane {
+  @apply hidden space-y-4;
+}
+.history-pane {
+  @apply space-y-4 hidden;
+}
+
+/* 타이머 */
+.timer {
+  @apply text-right text-sm text-gray-600;
+}
+
+/* 신청내역 리스트 */
+.history-list {
+  @apply bg-white p-4 rounded-lg shadow space-y-2;
+}
+.history-item {
+  @apply flex justify-between items-center;
+}
