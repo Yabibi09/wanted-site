@@ -3,87 +3,101 @@
 <head>
   <meta charset="UTF-8"/>
   <title>신청 사이트</title>
-  <style>
-    body { font-family: sans-serif; max-width: 600px; margin: auto; padding: 1rem; }
-    h1 { text-align: center; }
-    form { margin-bottom: 1rem; }
-    input { display: block; width: 100%; padding: .5rem; margin-bottom: .5rem; }
-    button { padding: .5rem 1rem; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { border: 1px solid #ccc; text-align: center; padding: .5rem; }
-    td.disabled { background: #f5f5f5; color: #999; }
-    td.active { cursor: pointer; }
-    .count { font-size: .75rem; color: #333; margin-top: .3rem; }
-    #nav { text-align: center; margin: 1rem 0; }
-    #nav button { margin: 0 .5rem; }
-  </style>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-gray-100 text-gray-800">
 
-  <h1>신청 사이트</h1>
+  <div class="max-w-lg mx-auto p-4">
+    <h1 class="text-3xl font-bold text-center mb-6">신청 사이트</h1>
 
-  <!-- 회원가입 / 로그인 화면 -->
-  <div id="auth">
-    <button id="showLogin">로그인</button>
-    <button id="showRegister">회원가입</button>
+    <!-- 회원가입 / 로그인 영역 -->
+    <div id="auth" class="space-y-4">
+      <div class="flex justify-center gap-4">
+        <button id="showLogin" class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow">로그인</button>
+        <button id="showRegister" class="px-4 py-2 bg-green-600 text-white rounded-lg shadow">회원가입</button>
+      </div>
 
-    <form id="formLogin" style="display:none;">
-      <h2>로그인</h2>
-      <input id="loginName" placeholder="이름" required />
-      <input id="loginPw" type="password" placeholder="비밀번호" required />
-      <button type="submit">로그인</button>
-    </form>
+      <!-- 로그인 폼 -->
+      <form id="formLogin" class="space-y-3 hidden bg-white p-4 rounded-lg shadow">
+        <h2 class="text-xl font-semibold">로그인</h2>
+        <input id="loginName" placeholder="이름" required
+               class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"/>
+        <input id="loginPw" type="password" placeholder="비밀번호" required
+               class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"/>
+        <button type="submit" class="w-full py-2 bg-blue-600 text-white rounded-lg">로그인</button>
+      </form>
 
-    <form id="formRegister" style="display:none;">
-      <h2>회원가입</h2>
-      <input id="regName" placeholder="이름" required />
-      <input id="regPw" type="password" placeholder="비밀번호" required />
-      <button type="submit">회원가입</button>
-    </form>
-  </div>
-
-  <!-- 달력 화면 -->
-  <div id="app" style="display:none;">
-    <div>
-      <span id="welcome"></span>
-      <button id="logout">로그아웃</button>
+      <!-- 회원가입 폼 -->
+      <form id="formRegister" class="space-y-3 hidden bg-white p-4 rounded-lg shadow">
+        <h2 class="text-xl font-semibold">회원가입</h2>
+        <input id="regName" placeholder="이름" required
+               class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"/>
+        <input id="regPw" type="password" placeholder="비밀번호" required
+               class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"/>
+        <button type="submit" class="w-full py-2 bg-green-600 text-white rounded-lg">회원가입</button>
+      </form>
     </div>
-    <div id="nav">
-      <button id="prev">&lt; 이전</button>
-      <span id="monthLabel"></span>
-      <button id="next">다음 &gt;</button>
+
+    <!-- 달력 및 신청 영역 -->
+    <div id="app" class="hidden">
+      <div class="flex justify-between items-center mb-4">
+        <span id="welcome" class="text-lg font-medium"></span>
+        <button id="logout" class="px-3 py-1 bg-red-500 text-white rounded-lg shadow">로그아웃</button>
+      </div>
+
+      <!-- 월 이동 네비게이션 -->
+      <div id="nav" class="flex justify-between items-center mb-2">
+        <button id="prev" class="px-3 py-1 bg-gray-300 rounded-lg">‹ 이전</button>
+        <span id="monthLabel" class="text-lg font-semibold"></span>
+        <button id="next" class="px-3 py-1 bg-gray-300 rounded-lg">다음 ›</button>
+      </div>
+
+      <!-- 달력 테이블 -->
+      <div class="overflow-x-auto">
+        <table class="min-w-full bg-white rounded-lg shadow">
+          <thead class="bg-blue-100">
+            <tr>
+              <th class="py-2">일</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th>
+            </tr>
+          </thead>
+          <tbody id="calendar" class="divide-y"></tbody>
+        </table>
+      </div>
     </div>
-    <table>
-      <thead>
-        <tr><th>일</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th></tr>
-      </thead>
-      <tbody id="calendar"></tbody>
-    </table>
   </div>
 
   <script>
     // --- 로컬스토리지 유틸 ---
-    function getUsers() { return JSON.parse(localStorage.getItem('app_users')||'[]'); }
-    function saveUsers(u) { localStorage.setItem('app_users', JSON.stringify(u)); }
-    function getData() { return JSON.parse(localStorage.getItem('app_data')||'{}'); }
-    function saveData(d) { localStorage.setItem('app_data', JSON.stringify(d)); }
+    function getUsers() { 
+      return JSON.parse(localStorage.getItem('app_users') || '[]'); 
+    }
+    function saveUsers(u) { 
+      localStorage.setItem('app_users', JSON.stringify(u)); 
+    }
+    function getData() { 
+      return JSON.parse(localStorage.getItem('app_data') || '{}'); 
+    }
+    function saveData(d) { 
+      localStorage.setItem('app_data', JSON.stringify(d)); 
+    }
 
     // --- 화면 요소 참조 ---
-    const authDiv = document.getElementById('auth'),
-          formLogin = document.getElementById('formLogin'),
+    const authDiv      = document.getElementById('auth'),
+          formLogin    = document.getElementById('formLogin'),
           formRegister = document.getElementById('formRegister'),
-          appDiv = document.getElementById('app'),
-          welcome = document.getElementById('welcome');
+          appDiv       = document.getElementById('app'),
+          welcome      = document.getElementById('welcome');
 
     // --- 현재 로그인 유저 ---
     let currentUser = localStorage.getItem('app_current') || '';
 
     // --- 뷰 전환 함수 ---
     function showAuth() {
-      authDiv.style.display = 'block';
-      appDiv.style.display = 'none';
-      formLogin.style.display = 'none';
-      formRegister.style.display = 'none';
+      authDiv.style.display       = 'block';
+      appDiv.style.display        = 'none';
+      formLogin.style.display     = 'none';
+      formRegister.style.display  = 'none';
     }
     function showLogin() {
       showAuth();
@@ -96,20 +110,20 @@
     function showApp() {
       if (!currentUser) return showLogin();
       authDiv.style.display = 'none';
-      appDiv.style.display = 'block';
-      welcome.textContent = currentUser + '님 환영합니다';
+      appDiv.style.display  = 'block';
+      welcome.textContent   = currentUser + '님 환영합니다';
       renderCalendar();
     }
 
     // --- 버튼 이벤트 바인딩 ---
-    document.getElementById('showLogin').onclick = showLogin;
+    document.getElementById('showLogin').onclick    = showLogin;
     document.getElementById('showRegister').onclick = showReg;
 
     // --- 회원가입 처리 ---
     formRegister.onsubmit = e => {
       e.preventDefault();
-      const name = document.getElementById('regName').value.trim();
-      const pw = document.getElementById('regPw').value;
+      const name = document.getElementById('regName').value.trim(),
+            pw   = document.getElementById('regPw').value;
       let users = getUsers();
       if (users.find(u => u.name === name)) {
         alert('이미 존재하는 이름입니다');
@@ -124,10 +138,10 @@
     // --- 로그인 처리 ---
     formLogin.onsubmit = e => {
       e.preventDefault();
-      const name = document.getElementById('loginName').value.trim();
-      const pw = document.getElementById('loginPw').value;
-      const users = getUsers();
-      const u = users.find(u => u.name === name && u.pw === pw);
+      const name = document.getElementById('loginName').value.trim(),
+            pw   = document.getElementById('loginPw').value;
+      const users = getUsers(),
+            u     = users.find(u => u.name === name && u.pw === pw);
       if (!u) {
         alert('이름 또는 비밀번호가 틀렸습니다');
         return;
@@ -148,34 +162,47 @@
     if (currentUser) showApp();
     else showLogin();
 
-    // --- 달력 로직 ---
+    // --- 달력 네비게이션 ---
     let cur = new Date();
-    document.getElementById('prev').onclick = () => { cur.setMonth(cur.getMonth() - 1); renderCalendar(); };
-    document.getElementById('next').onclick = () => { cur.setMonth(cur.getMonth() + 1); renderCalendar(); };
+    document.getElementById('prev').onclick = () => {
+      cur.setMonth(cur.getMonth() - 1);
+      renderCalendar();
+    };
+    document.getElementById('next').onclick = () => {
+      cur.setMonth(cur.getMonth() + 1);
+      renderCalendar();
+    };
 
+    // --- 달력 렌더링 ---
     function renderCalendar() {
-      const tb = document.getElementById('calendar');
+      const tb   = document.getElementById('calendar');
       tb.innerHTML = '';
-      const year = cur.getFullYear(), mon = cur.getMonth();
+      const year = cur.getFullYear(),
+            mon  = cur.getMonth();
       document.getElementById('monthLabel').textContent = `${year}년 ${mon + 1}월`;
 
-      const firstDay = new Date(year, mon, 1).getDay();
-      const days = new Date(year, mon + 1, 0).getDate();
+      const firstDay = new Date(year, mon, 1).getDay(),
+            days     = new Date(year, mon + 1, 0).getDate();
       let row = document.createElement('tr');
+
+      // 빈 셀 채우기
       for (let i = 0; i < firstDay; i++) {
         const td = document.createElement('td');
         td.classList.add('disabled');
         row.appendChild(td);
       }
+
       const data = getData();
+      // 날짜 셀 생성
       for (let d = 1; d <= days; d++) {
         if ((firstDay + d - 1) % 7 === 0 && d !== 1) {
           tb.appendChild(row);
           row = document.createElement('tr');
         }
         const dateStr = `${year}-${String(mon + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-        const td = document.createElement('td');
-        td.innerHTML = `<div>${d}</div><div class="count">${(data[dateStr]||[]).length}/3</div>`;
+        const td      = document.createElement('td');
+        td.innerHTML  = `<div>${d}</div><div class="count">${(data[dateStr]||[]).length}/3</div>`;
+
         const arr = data[dateStr] || [];
         if (arr.includes(currentUser)) {
           td.classList.add('active');
@@ -188,6 +215,8 @@
         }
         row.appendChild(td);
       }
+
+      // 마지막 빈 셀 채우기
       while (row.children.length < 7) {
         const td = document.createElement('td');
         td.classList.add('disabled');
@@ -196,9 +225,10 @@
       tb.appendChild(row);
     }
 
+    // --- 신청 처리 ---
     function apply(dateStr) {
-      const data = getData();
-      const arr = data[dateStr] || [];
+      const data = getData(),
+            arr  = data[dateStr] || [];
       if (arr.includes(currentUser)) {
         alert('이미 신청함');
         return;
@@ -209,6 +239,7 @@
       renderCalendar();
     }
 
+    // --- 취소 처리 ---
     function cancel(dateStr) {
       if (!confirm('취소할까요?')) return;
       const data = getData();
@@ -218,5 +249,3 @@
       renderCalendar();
     }
   </script>
-</body>
-</html>
