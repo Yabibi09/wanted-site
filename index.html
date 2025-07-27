@@ -65,20 +65,18 @@
     <!-- 우측: 내 신청 내역 -->
     <div class="space-y-4">
       <h2 class="text-xl font-semibold">내 신청 내역</h2>
-      <ul id="myList" class="bg-white p-4 rounded-lg shadow space-y-2">
-        <!-- JS로 채워집니다 -->
-      </ul>
+      <ul id="myList" class="bg-white p-4 rounded-lg shadow space-y-2"></ul>
     </div>
   </div>
 
   <script>
-    // --- 로컬스토리지 유틸 ---
+    // 로컬스토리지 유틸
     function getUsers() { return JSON.parse(localStorage.getItem('app_users')||'[]'); }
     function saveUsers(u){ localStorage.setItem('app_users', JSON.stringify(u)); }
     function getData()    { return JSON.parse(localStorage.getItem('app_data')||'{}'); }
     function saveData(d)  { localStorage.setItem('app_data', JSON.stringify(d)); }
 
-    // --- 요소 참조 ---
+    // 요소 참조
     const authDiv      = document.getElementById('auth'),
           formLogin    = document.getElementById('formLogin'),
           formRegister = document.getElementById('formRegister'),
@@ -94,6 +92,16 @@
     let currentUser = localStorage.getItem('app_current')||'',
         cur         = new Date(),
         selected    = [];  // 선택된 날짜 리스트
+
+    // 한 달 최대 8일 신청 카운트
+    function countThisMonth(user, data, year, month) {
+      return Object.entries(data)
+        .filter(([date, arr])=>{
+          if (!arr.includes(user)) return false;
+          const [y,m] = date.split('-').map(Number);
+          return y===year && (m-1)===month;
+        }).length;
+    }
 
     // 뷰 전환
     function showAuth(){ authDiv.classList.remove('hidden'); appDiv.classList.add('hidden'); }
@@ -139,11 +147,16 @@
 
     // 신청 버튼
     applyBtn.onclick = ()=>{
-      const data = getData();
-      selected.forEach(dateStr=>{
-        const arr = data[dateStr]||[];
+      const data = getData(), year=cur.getFullYear(), month=cur.getMonth();
+      const existingCount = countThisMonth(currentUser,data,year,month);
+      if(existingCount + selected.length > 8) {
+        alert(`한 달에 최대 8일까지만 신청 가능합니다. (현재 ${existingCount}일 신청됨)`);
+        return;
+      }
+      selected.forEach(ds=>{
+        const arr = data[ds]||[];
         if(arr.length<3 && !arr.includes(currentUser)) arr.push(currentUser);
-        data[dateStr] = arr;
+        data[ds] = arr;
       });
       saveData(data);
       selected = [];
@@ -192,8 +205,21 @@
     // 선택 토글
     function toggleSelect(ds){
       const idx = selected.indexOf(ds);
-      if(idx>=0) selected.splice(idx,1);
-      else if(selected.length<3) selected.push(ds);
+      const data = getData(), year=cur.getFullYear(), month=cur.getMonth();
+      const existingCount = countThisMonth(currentUser,data,year,month);
+      if(idx>=0) {
+        selected.splice(idx,1);
+      } else {
+        if(selected.length>=3){
+          alert('한 번에 최대 3일 선택 가능합니다.');
+          return;
+        }
+        if(existingCount + selected.length + 1 > 8){
+          alert(`이 달에 최대 8일까지만 신청 가능합니다. (현재 ${existingCount}일 신청됨)`);
+          return;
+        }
+        selected.push(ds);
+      }
       updateSelectionUI();
     }
 
