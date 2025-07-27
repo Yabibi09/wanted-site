@@ -1,8 +1,18 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 /* === 커스텀 스타일 === */
+
+/* ===== 추가: 귀여운 버블 버튼 ===== */
+.btn-bubble {
+  @apply rounded-full px-6 py-2 font-semibold text-white 
+         shadow-lg transform transition-all 
+         hover:scale-105;
+  background: linear-gradient(135deg, #FF7CAC 0%, #FFD76E 100%);
+}
+
+/* 로그인/회원가입 버튼 전용 */
+#showLogin.btn-bubble  { /* 진한 분홍 → 노랑 그라데이션 */ }
+#showRegister.btn-bubble { /* 보라 → 분홍 그라데이션 */ 
+  background: linear-gradient(135deg, #A18CD1 0%, #FBC2EB 100%);
+}
 
 /* 버튼 그림자와 호버 효과 강화 */
 .btn {
