@@ -1,7 +1,15 @@
 // js/main.js
 window.addEventListener('DOMContentLoaded', () => {
   const INACTIVITY_LIMIT = 10 * 60 * 1000;
-  const allowedNames = ["Alice","Bob","Charlie","Delta","Echo"];
+  function login(name) {
+      // 관리자 로그인 시 admin.html로 리디렉트
+      if (name === 'admin') {
+        window.location.href = 'admin.html';
+        return;
+      }
+      currentUser = name;
+      localStorage.setItem('app_current', name);
+      showApp();
 
   // 유틸
   const getUsers = () => JSON.parse(localStorage.getItem('app_users')||'[]');
