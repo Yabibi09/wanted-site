@@ -38,6 +38,10 @@
           <span id="welcome" class="text-lg font-medium"></span>
           <button id="logout" class="px-3 py-1 bg-red-500 text-white rounded-lg shadow">로그아웃</button>
         </div>
+        <!-- 타이머 표시 -->
+        <div class="text-right text-sm text-gray-600">
+          남은 시간: <span id="timer">--:--</span>
+        </div>
         <div class="flex justify-between items-center">
           <button id="prev" class="px-3 py-1 bg-gray-300 rounded-lg">‹ 이전</button>
           <span id="monthLabel" class="text-lg font-semibold"></span>
@@ -62,26 +66,29 @@
       </div>
     </div>
 
-    <!-- 우측: 내 신청 내역 -->
-    <div class="space-y-4">
-      <h2 class="text-xl font-semibold">내 신청 내역</h2>
+    <!-- 우측: 신청내역 -->
+    <div class="space-y-4 hidden" id="history">
+      <h2 class="text-xl font-semibold">신청내역</h2>
       <ul id="myList" class="bg-white p-4 rounded-lg shadow space-y-2"></ul>
     </div>
   </div>
 
   <script>
-    // 로컬스토리지 유틸
+    const INACTIVITY_LIMIT = 10 * 60 * 1000; // 10분
+
     function getUsers() { return JSON.parse(localStorage.getItem('app_users')||'[]'); }
     function saveUsers(u){ localStorage.setItem('app_users', JSON.stringify(u)); }
     function getData()    { return JSON.parse(localStorage.getItem('app_data')||'{}'); }
     function saveData(d)  { localStorage.setItem('app_data', JSON.stringify(d)); }
+    function updateActivity(){ localStorage.setItem('lastActivity', Date.now()); }
 
-    // 요소 참조
     const authDiv      = document.getElementById('auth'),
           formLogin    = document.getElementById('formLogin'),
           formRegister = document.getElementById('formRegister'),
           appDiv       = document.getElementById('app'),
+          historyDiv   = document.getElementById('history'),
           welcome      = document.getElementById('welcome'),
+          timerEl      = document.getElementById('timer'),
           calBody      = document.getElementById('calendar'),
           monthLabel   = document.getElementById('monthLabel'),
           selDatesEl   = document.getElementById('selectedDates'),
@@ -91,173 +98,59 @@
 
     let currentUser = localStorage.getItem('app_current')||'',
         cur         = new Date(),
-        selected    = [];  // 선택된 날짜 리스트
+        selected    = [];
 
-    // 한 달 최대 8일 신청 카운트
-    function countThisMonth(user, data, year, month) {
-      return Object.entries(data)
-        .filter(([date, arr])=>{
-          if (!arr.includes(user)) return false;
-          const [y,m] = date.split('-').map(Number);
-          return y===year && (m-1)===month;
-        }).length;
+    // 타이머 업데이트
+    function startTimer(){
+      function update(){
+        const last = parseInt(localStorage.getItem('lastActivity')||0,10);
+        let diff = INACTIVITY_LIMIT - (Date.now() - last);
+        if(diff<=0){ alert('자동 로그아웃 됩니다.'); logout(); return; }
+        const m = String(Math.floor(diff/60000)).padStart(2,'0');
+        const s = String(Math.floor((diff%60000)/1000)).padStart(2,'0');
+        timerEl.textContent = `${m}:${s}`;
+      }
+      update();
+      return setInterval(update,1000);
     }
 
-    // 뷰 전환
-    function showAuth(){ authDiv.classList.remove('hidden'); appDiv.classList.add('hidden'); }
+    let timerInterval;
+    function showAuth(){ authDiv.classList.remove('hidden'); appDiv.classList.add('hidden'); historyDiv.classList.add('hidden'); clearInterval(timerInterval); }
     function showApp(){
       if(!currentUser) return showAuth();
-      authDiv.classList.add('hidden'); appDiv.classList.remove('hidden');
-      welcome.textContent = currentUser + '선생님 ❤️';
+      authDiv.classList.add('hidden'); appDiv.classList.remove('hidden'); historyDiv.classList.remove('hidden');
+      welcome.textContent = currentUser + '님 환영';
+      updateActivity(); timerInterval = startTimer();
       renderCalendar(); renderMyList(); updateSelectionUI();
     }
 
-    // 인증 버튼
     document.getElementById('showLogin').onclick    = ()=>{ formLogin.classList.remove('hidden'); formRegister.classList.add('hidden'); showAuth(); };
     document.getElementById('showRegister').onclick = ()=>{ formRegister.classList.remove('hidden'); formLogin.classList.add('hidden'); showAuth(); };
 
-    // 회원가입
-    formRegister.onsubmit = e=>{
-      e.preventDefault();
-      const name = document.getElementById('regName').value.trim(),
-            pw   = document.getElementById('regPw').value;
-      let users = getUsers();
-      if(users.find(u=>u.name===name)){ alert('이미 존재'); return; }
-      users.push({name,pw}); saveUsers(users);
-      alert('가입 완료'); formRegister.classList.add('hidden'); formLogin.classList.remove('hidden');
-    };
-    // 로그인
-    formLogin.onsubmit = e=>{
-      e.preventDefault();
-      const name = document.getElementById('loginName').value.trim(),
-            pw   = document.getElementById('loginPw').value;
-      const u = getUsers().find(u=>u.name===name&&u.pw===pw);
-      if(!u){ alert('실패'); return; }
-      currentUser = name; localStorage.setItem('app_current',name);
-      showApp();
-    };
-    // 로그아웃
-    document.getElementById('logout').onclick = ()=>{
-      localStorage.removeItem('app_current'); currentUser=''; showAuth();
-    };
+    formRegister.onsubmit = e=>{ e.preventDefault(); const name=document.getElementById('regName').value.trim(), pw=document.getElementById('regPw').value; let users=getUsers(); if(users.find(u=>u.name===name)){ alert('이미 존재'); return;} users.push({name,pw}); saveUsers(users); alert('가입 완료'); formRegister.classList.add('hidden'); formLogin.classList.remove('hidden'); };
+    formLogin.onsubmit    = e=>{ e.preventDefault(); const name=document.getElementById('loginName').value.trim(), pw=document.getElementById('loginPw').value; const u=getUsers().find(u=>u.name===name&&u.pw===pw); if(!u){ alert('로그인 실패'); return;} currentUser=name; localStorage.setItem('app_current',name); showApp(); };
+    function logout(){ localStorage.removeItem('app_current'); currentUser=''; showAuth(); }
+    document.getElementById('logout').onclick = logout;
 
-    // 네비
     document.getElementById('prev').onclick = ()=>{ cur.setMonth(cur.getMonth()-1); renderCalendar(); };
     document.getElementById('next').onclick = ()=>{ cur.setMonth(cur.getMonth()+1); renderCalendar(); };
 
-    // 신청 버튼
-    applyBtn.onclick = ()=>{
-      const data = getData(), year=cur.getFullYear(), month=cur.getMonth();
-      const existingCount = countThisMonth(currentUser,data,year,month);
-      if(existingCount + selected.length > 8) {
-        alert(`한 달에 최대 8일까지만 신청 가능합니다. (현재 ${existingCount}일 신청됨)`);
-        return;
-      }
-      selected.forEach(ds=>{
-        const arr = data[ds]||[];
-        if(arr.length<3 && !arr.includes(currentUser)) arr.push(currentUser);
-        data[ds] = arr;
-      });
-      saveData(data);
-      selected = [];
-      renderCalendar(); renderMyList(); updateSelectionUI();
-    };
+    applyBtn.onclick = ()=>{ const data=getData(), year=cur.getFullYear(), month=cur.getMonth(); const existing = countThisMonth(currentUser,data,year,month); if(existing+selected.length>8){ alert(`한 달 최대 8일(현재 ${existing}일) 초과`); return;} selected.forEach(ds=>{ const arr=data[ds]||[]; if(arr.length<3&&!arr.includes(currentUser)) arr.push(currentUser); data[ds]=arr; }); saveData(data); selected=[]; renderCalendar(); renderMyList(); updateSelectionUI(); };
 
-    // 달력 렌더링
-    function renderCalendar(){
-      calBody.innerHTML='';
-      monthLabel.textContent = `${cur.getFullYear()}년 ${cur.getMonth()+1}월`;
-      const firstDay = new Date(cur.getFullYear(),cur.getMonth(),1).getDay(),
-            days     = new Date(cur.getFullYear(),cur.getMonth()+1,0).getDate();
-      let row = document.createElement('tr');
+    function countThisMonth(user,data,year,month){ return Object.entries(data).filter(([date,arr])=>{ if(!arr.includes(user)) return false; const [y,m]=date.split('-').map(Number); return y===year && m-1===month; }).length; }
 
-      // 빈칸
-      for(let i=0;i<firstDay;i++) row.appendChild(makeCell('',true));
+    function renderCalendar(){ calBody.innerHTML=''; monthLabel.textContent=`${cur.getFullYear()}년 ${cur.getMonth()+1}월`; const first=new Date(cur.getFullYear(),cur.getMonth(),1).getDay(), days=new Date(cur.getFullYear(),cur.getMonth()+1,0).getDate(); let row=document.createElement('tr'); for(let i=0;i<first;i++) row.appendChild(makeCell('',true)); const data=getData(); for(let d=1; d<=days; d++){ if((first+d-1)%7===0&&d!==1){ calBody.appendChild(row); row=document.createElement('tr'); } const ds=`${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`, arr=data[ds]||[]; row.appendChild(makeCell(d,false,ds,arr)); } while(row.children.length<7) row.appendChild(makeCell('',true)); calBody.appendChild(row); updateSelectionUI(); }
+    function makeCell(day,disabled=false,ds='',arr=[]){ const td=document.createElement('td'); td.className=disabled?'disabled p-2':'p-2'; if(!disabled&&day){ if(arr.includes(currentUser)){ td.classList.add('bg-red-100'); td.onclick=()=>alert('이미 신청한 날짜입니다.'); } else{ td.classList.add('cursor-pointer','hover:bg-blue-50'); td.onclick=()=>toggleSelect(ds);} } td.innerHTML=disabled?'':`<div>${day}</div><div class="count text-sm text-gray-600">${arr.length}/3</div>`; return td; }
+    function toggleSelect(ds){ const idx=selected.indexOf(ds), data=getData(), existing=countThisMonth(currentUser,data,cur.getFullYear(),cur.getMonth()); if(idx>=0) selected.splice(idx,1); else{ if(selected.length>=3){ alert('최대 3일 선택 가능합니다.'); return;} if(existing+selected.length+1>8){ alert(`한 달 최대 8일(현재 ${existing}일) 초과`); return;} selected.push(ds);} updateSelectionUI(); }
+    function updateSelectionUI(){ document.querySelectorAll('#calendar td').forEach(td=>td.classList.remove('bg-blue-200')); selected.forEach(ds=>{ document.querySelectorAll('#calendar td').forEach(td=>{ if(td.innerText.startsWith(String(Number(ds.slice(-2))))) td.classList.add('bg-blue-200'); }); }); selDatesEl.textContent=selected.join(', ')||'없음'; selCountEl.textContent=selected.length; applyBtn.disabled=selected.length===0; }
 
-      const data = getData();
-      for(let d=1; d<=days; d++){
-        if((firstDay+d-1)%7===0 && d!==1){
-          calBody.appendChild(row);
-          row = document.createElement('tr');
-        }
-        const ds  = `${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`,
-              arr = data[ds]||[];
-        row.appendChild(makeCell(d,false,ds,arr));
-      }
-      while(row.children.length<7) row.appendChild(makeCell('',true));
-      calBody.appendChild(row);
-      updateSelectionUI();
-    }
+    function renderMyList(){ myList.innerHTML=''; const data=getData(); Object.keys(data).filter(date=>data[date].includes(currentUser)).sort().forEach(date=>{ const li=document.createElement('li'); li.className='flex justify-between items-center'; li.innerHTML=`<span>${date}</span><button class="text-red-500">X</button>`; li.querySelector('button').onclick=()=>{ if(!confirm('취소할까요?')) return; data[date]=data[date].filter(n=>n!==currentUser); if(data[date].length===0) delete data[date]; saveData(data); renderCalendar(); renderMyList(); }; myList.appendChild(li); }); }
 
-    // 셀 생성
-    function makeCell(day, disabled=false, ds='', arr=[]){
-      const td = document.createElement('td');
-      td.className = disabled ? 'disabled p-2' : 'p-2';
-      if(!disabled && day){
-        td.classList.add('cursor-pointer','hover:bg-blue-50');
-        td.onclick = ()=>toggleSelect(ds);
-      }
-      td.innerHTML = disabled ? '' :
-        `<div>${day}</div><div class="count text-sm text-gray-600">${arr.length}/3</div>`;
-      return td;
-    }
-
-    // 선택 토글
-    function toggleSelect(ds){
-      const idx = selected.indexOf(ds);
-      const data = getData(), year=cur.getFullYear(), month=cur.getMonth();
-      const existingCount = countThisMonth(currentUser,data,year,month);
-      if(idx>=0) {
-        selected.splice(idx,1);
-      } else {
-        if(selected.length>=3){
-          alert('한 번에 최대 3일까지 선택 가능합니다.');
-          return;
-        }
-        if(existingCount + selected.length + 1 > 8){
-          alert(`이 달에 최대 8일까지만 신청 가능합니다. (현재 ${existingCount}일 신청됨)`);
-          return;
-        }
-        selected.push(ds);
-      }
-      updateSelectionUI();
-    }
-
-    // 선택 UI 업데이트
-    function updateSelectionUI(){
-      document.querySelectorAll('#calendar td').forEach(td=>td.classList.remove('bg-blue-200'));
-      selected.forEach(ds=>{
-        document.querySelectorAll('#calendar td').forEach(td=>{
-          if(td.innerText.startsWith(String(Number(ds.slice(-2))))) td.classList.add('bg-blue-200');
-        });
-      });
-      selDatesEl.textContent = selected.join(', ')||'없음';
-      selCountEl.textContent  = selected.length;
-      applyBtn.disabled       = selected.length===0;
-    }
-
-    // 내 신청 내역 렌더
-    function renderMyList(){
-      myList.innerHTML = '';
-      const data = getData();
-      Object.keys(data).filter(date=>data[date].includes(currentUser))
-        .sort().forEach(date=>{
-          const li = document.createElement('li');
-          li.className = 'flex justify-between items-center';
-          li.innerHTML = `<span>${date}</span><button class="text-red-500">X</button>`;
-          li.querySelector('button').onclick = ()=>{
-            if(!confirm('취소할까요?')) return;
-            data[date] = data[date].filter(n=>n!==currentUser);
-            if(data[date].length===0) delete data[date];
-            saveData(data);
-            renderCalendar(); renderMyList();
-          };
-          myList.appendChild(li);
-        });
-    }
+    // 활동 이벤트
+    ['click','keydown','mousemove'].forEach(evt=>document.addEventListener(evt,updateActivity));
 
     // 초기화
-    if(currentUser) showApp(); else showAuth();
+    if(currentUser){ updateActivity(); showApp(); } else showAuth();
   </script>
 </body>
 </html>
