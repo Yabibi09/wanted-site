@@ -62,145 +62,161 @@
   </div>
 
   <script>
-  // --- 로컬스토리지 유틸 ---
-  function getUsers() {
-    return JSON.parse(localStorage.getItem('app_users')||'[]');
-  }
-  function saveUsers(u){ localStorage.setItem('app_users', JSON.stringify(u)); }
-  function getData(){
-    return JSON.parse(localStorage.getItem('app_data')||'{}');
-  }
-  function saveData(d){ localStorage.setItem('app_data', JSON.stringify(d)); }
+    // --- 로컬스토리지 유틸 ---
+    function getUsers() { return JSON.parse(localStorage.getItem('app_users')||'[]'); }
+    function saveUsers(u) { localStorage.setItem('app_users', JSON.stringify(u)); }
+    function getData() { return JSON.parse(localStorage.getItem('app_data')||'{}'); }
+    function saveData(d) { localStorage.setItem('app_data', JSON.stringify(d)); }
 
-  // --- 화면 요소 ---
-  const authDiv = document.getElementById('auth');
-  const formLogin = document.getElementById('formLogin');
-  const formRegister = document.getElementById('formRegister');
-  const appDiv = document.getElementById('app');
-  const welcome = document.getElementById('welcome');
+    // --- 화면 요소 참조 ---
+    const authDiv = document.getElementById('auth'),
+          formLogin = document.getElementById('formLogin'),
+          formRegister = document.getElementById('formRegister'),
+          appDiv = document.getElementById('app'),
+          welcome = document.getElementById('welcome');
 
-  // --- 현재 로그인 유저 ---
-  let currentUser = localStorage.getItem('app_current') || '';
+    // --- 현재 로그인 유저 ---
+    let currentUser = localStorage.getItem('app_current') || '';
 
-  // --- 뷰 전환 ---
-  function showAuth(){
-    authDiv.style.display='block'; appDiv.style.display='none';
-    formLogin.style.display='none'; formRegister.style.display='none';
-  }
-  function showLogin(){
-    showAuth(); formLogin.style.display='block';
-  }
-  function showReg(){
-    showAuth(); formRegister.style.display='block';
-  }
-  function showApp(){
-    if(!currentUser) return showLogin();
-    authDiv.style.display='none'; appDiv.style.display='block';
-    welcome.textContent = currentUser+'님 환영합니다';
-    renderCalendar();
-  }
-
-  // --- 회원가입/로그인 이벤트 바인딩 ---
-  document.getElementById('showLogin').onclick=showLogin;
-  document.getElementById('showRegister').onclick=showReg;
-
-  // 회원가입
-  formRegister.onsubmit = e=>{
-    e.preventDefault();
-    const name=document.getElementById('regName').value.trim();
-    const pw=document.getElementById('regPw').value;
-    let users=getUsers();
-    if(users.find(u=>u.name===name)){ alert('이미 존재하는 이름입니다'); return; }
-    users.push({ name,pw });
-    saveUsers(users);
-    alert('회원가입 완료! 로그인 해주세요');
-    showLogin();
-  };
-
-  // 로그인
-  formLogin.onsubmit = e=>{
-    e.preventDefault();
-    const name=document.getElementById('loginName').value.trim();
-    const pw=document.getElementById('loginPw').value;
-    const users=getUsers();
-    const u=users.find(u=>u.name===name && u.pw===pw);
-    if(!u){ alert('이름 또는 비밀번호가 틀렸습니다'); return; }
-    currentUser=name;
-    localStorage.setItem('app_current', currentUser);
-    showApp();
-  };
-
-  // 로그아웃
-  document.getElementById('logout').onclick = ()=>{
-    localStorage.removeItem('app_current');
-    currentUser='';
-    showAuth();
-  };
-
-  // 처음 로드
-  if(currentUser) showApp();
-  else showLogin();
-
-  // --- 달력 로직 ---
-  let cur=new Date();
-  document.getElementById('prev').onclick=()=>{
-    cur.setMonth(cur.getMonth()-1); renderCalendar();
-  };
-  document.getElementById('next').onclick=()=>{
-    cur.setMonth(cur.getMonth()+1); renderCalendar();
-  };
-
-  function renderCalendar(){
-    const tb = document.getElementById('calendar');
-    tb.innerHTML='';
-    const year=cur.getFullYear(), mon=cur.getMonth();
-    document.getElementById('monthLabel').textContent = `${year}년 ${mon+1}월`;
-
-    const firstDay=new Date(year,mon,1).getDay();
-    const days=new Date(year,mon+1,0).getDate();
-    let row=document.createElement('tr');
-    // 빈칸
-    for(let i=0;i<firstDay;i++){ const td=document.createElement('td'); td.classList.add('disabled'); row.appendChild(td); }
-    // 날짜
-    const data=getData();
-    for(let d=1;d<=days;d++){
-      if((firstDay+d-1)%7===0&&d!==1){ tb.appendChild(row); row=document.createElement('tr'); }
-      const dateStr=\`\${year}-\${String(mon+1).padStart(2,'0')}-\${String(d).padStart(2,'0')}\`;
-      const td=document.createElement('td');
-      td.innerHTML=\`<div>\${d}</div><div class="count">\${(data[dateStr]||[]).length}/3</div>\`;
-      // 클릭 가능/불가
-      const arr=data[dateStr]||[];
-      if(arr.includes(currentUser)){
-        td.classList.add('active');
-        td.onclick=()=>cancel(dateStr);
-      } else if(arr.length<3){
-        td.classList.add('active');
-        td.onclick=()=>apply(dateStr);
-      } else {
-        td.classList.add('disabled');
-      }
-      row.appendChild(td);
+    // --- 뷰 전환 함수 ---
+    function showAuth() {
+      authDiv.style.display = 'block';
+      appDiv.style.display = 'none';
+      formLogin.style.display = 'none';
+      formRegister.style.display = 'none';
     }
-    // 마지막 빈칸
-    while(row.children.length<7){ const td=document.createElement('td'); td.classList.add('disabled'); row.appendChild(td); }
-    tb.appendChild(row);
-  }
+    function showLogin() {
+      showAuth();
+      formLogin.style.display = 'block';
+    }
+    function showReg() {
+      showAuth();
+      formRegister.style.display = 'block';
+    }
+    function showApp() {
+      if (!currentUser) return showLogin();
+      authDiv.style.display = 'none';
+      appDiv.style.display = 'block';
+      welcome.textContent = currentUser + '님 환영합니다';
+      renderCalendar();
+    }
 
-  function apply(dateStr){
-    const data=getData();
-    const arr=data[dateStr]||[];
-    if(arr.includes(currentUser)){ alert('이미 신청함'); return; }
-    arr.push(currentUser);
-    data[dateStr]=arr; saveData(data); renderCalendar();
-  }
-  function cancel(dateStr){
-    if(!confirm('취소할까요?')) return;
-    const data=getData();
-    data[dateStr]=data[dateStr].filter(n=>n!==currentUser);
-    if(data[dateStr].length===0) delete data[dateStr];
-    saveData(data); renderCalendar();
-  }
+    // --- 버튼 이벤트 바인딩 ---
+    document.getElementById('showLogin').onclick = showLogin;
+    document.getElementById('showRegister').onclick = showReg;
+
+    // --- 회원가입 처리 ---
+    formRegister.onsubmit = e => {
+      e.preventDefault();
+      const name = document.getElementById('regName').value.trim();
+      const pw = document.getElementById('regPw').value;
+      let users = getUsers();
+      if (users.find(u => u.name === name)) {
+        alert('이미 존재하는 이름입니다');
+        return;
+      }
+      users.push({ name, pw });
+      saveUsers(users);
+      alert('회원가입 완료! 로그인 해주세요');
+      showLogin();
+    };
+
+    // --- 로그인 처리 ---
+    formLogin.onsubmit = e => {
+      e.preventDefault();
+      const name = document.getElementById('loginName').value.trim();
+      const pw = document.getElementById('loginPw').value;
+      const users = getUsers();
+      const u = users.find(u => u.name === name && u.pw === pw);
+      if (!u) {
+        alert('이름 또는 비밀번호가 틀렸습니다');
+        return;
+      }
+      currentUser = name;
+      localStorage.setItem('app_current', currentUser);
+      showApp();
+    };
+
+    // --- 로그아웃 ---
+    document.getElementById('logout').onclick = () => {
+      localStorage.removeItem('app_current');
+      currentUser = '';
+      showAuth();
+    };
+
+    // 초기화: 로그인 상태에 따라 뷰 설정
+    if (currentUser) showApp();
+    else showLogin();
+
+    // --- 달력 로직 ---
+    let cur = new Date();
+    document.getElementById('prev').onclick = () => { cur.setMonth(cur.getMonth() - 1); renderCalendar(); };
+    document.getElementById('next').onclick = () => { cur.setMonth(cur.getMonth() + 1); renderCalendar(); };
+
+    function renderCalendar() {
+      const tb = document.getElementById('calendar');
+      tb.innerHTML = '';
+      const year = cur.getFullYear(), mon = cur.getMonth();
+      document.getElementById('monthLabel').textContent = `${year}년 ${mon + 1}월`;
+
+      const firstDay = new Date(year, mon, 1).getDay();
+      const days = new Date(year, mon + 1, 0).getDate();
+      let row = document.createElement('tr');
+      for (let i = 0; i < firstDay; i++) {
+        const td = document.createElement('td');
+        td.classList.add('disabled');
+        row.appendChild(td);
+      }
+      const data = getData();
+      for (let d = 1; d <= days; d++) {
+        if ((firstDay + d - 1) % 7 === 0 && d !== 1) {
+          tb.appendChild(row);
+          row = document.createElement('tr');
+        }
+        const dateStr = `${year}-${String(mon + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const td = document.createElement('td');
+        td.innerHTML = `<div>${d}</div><div class="count">${(data[dateStr]||[]).length}/3</div>`;
+        const arr = data[dateStr] || [];
+        if (arr.includes(currentUser)) {
+          td.classList.add('active');
+          td.onclick = () => cancel(dateStr);
+        } else if (arr.length < 3) {
+          td.classList.add('active');
+          td.onclick = () => apply(dateStr);
+        } else {
+          td.classList.add('disabled');
+        }
+        row.appendChild(td);
+      }
+      while (row.children.length < 7) {
+        const td = document.createElement('td');
+        td.classList.add('disabled');
+        row.appendChild(td);
+      }
+      tb.appendChild(row);
+    }
+
+    function apply(dateStr) {
+      const data = getData();
+      const arr = data[dateStr] || [];
+      if (arr.includes(currentUser)) {
+        alert('이미 신청함');
+        return;
+      }
+      arr.push(currentUser);
+      data[dateStr] = arr;
+      saveData(data);
+      renderCalendar();
+    }
+
+    function cancel(dateStr) {
+      if (!confirm('취소할까요?')) return;
+      const data = getData();
+      data[dateStr] = data[dateStr].filter(n => n !== currentUser);
+      if (data[dateStr].length === 0) delete data[dateStr];
+      saveData(data);
+      renderCalendar();
+    }
   </script>
-
 </body>
 </html>
