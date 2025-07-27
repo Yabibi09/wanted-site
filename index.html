@@ -26,7 +26,7 @@
         </form>
         <form id="formRegister" class="space-y-3 hidden bg-white p-4 rounded-lg shadow">
           <h2 class="text-xl font-semibold">회원가입</h2>
-          <input id="regName" placeholder="이름" required class="w-full px-3 py-2 border rounded-lg"/>
+          <input id="regName" placeholder="이름(Whitelist)" required class="w-full px-3 py-2 border rounded-lg"/>
           <input id="regPw" type="password" placeholder="비밀번호" required class="w-full px-3 py-2 border rounded-lg"/>
           <button type="submit" class="w-full py-2 bg-green-600 text-white rounded-lg">회원가입</button>
         </form>
@@ -75,6 +75,8 @@
 
   <script>
     const INACTIVITY_LIMIT = 10 * 60 * 1000; // 10분
+    // 허용된 아이디(이름) 목록
+    const allowedNames = ["Alice","Bob","Charlie","Delta","Echo"];
 
     function getUsers() { return JSON.parse(localStorage.getItem('app_users')||'[]'); }
     function saveUsers(u){ localStorage.setItem('app_users', JSON.stringify(u)); }
@@ -107,8 +109,7 @@
         const s = String(Math.floor((diff%60000)/1000)).padStart(2,'0');
         timerEl.textContent = `${m}:${s}`;
       }
-      update();
-      return setInterval(update,1000);
+      update(); return setInterval(update,1000);
     }
 
     let timerInterval;
@@ -124,8 +125,21 @@
     document.getElementById('showLogin').onclick    = ()=>{ formLogin.classList.remove('hidden'); formRegister.classList.add('hidden'); showAuth(); };
     document.getElementById('showRegister').onclick = ()=>{ formRegister.classList.remove('hidden'); formLogin.classList.add('hidden'); showAuth(); };
 
-    formRegister.onsubmit = e=>{ e.preventDefault(); const name=document.getElementById('regName').value.trim(), pw=document.getElementById('regPw').value; let users=getUsers(); if(users.find(u=>u.name===name)){ alert('이미 존재'); return;} users.push({name,pw}); saveUsers(users); alert('가입 완료'); formRegister.classList.add('hidden'); formLogin.classList.remove('hidden'); };
-    formLogin.onsubmit    = e=>{ e.preventDefault(); const name=document.getElementById('loginName').value.trim(), pw=document.getElementById('loginPw').value; const u=getUsers().find(u=>u.name===name&&u.pw===pw); if(!u){ alert('로그인 실패'); return;} login(name);}    
+    formRegister.onsubmit = e=>{
+      e.preventDefault();
+      const name = document.getElementById('regName').value.trim();
+      const pw   = document.getElementById('regPw').value;
+      if(!allowedNames.includes(name)){
+        alert('허용된 이름이 아닙니다.');
+        return;
+      }
+      let users = getUsers();
+      if(users.find(u=>u.name===name)){ alert('이미 존재하는 이름입니다.'); return; }
+      users.push({name,pw}); saveUsers(users);
+      alert('가입 완료'); formRegister.classList.add('hidden'); formLogin.classList.remove('hidden');
+    };
+
+    formLogin.onsubmit    = e=>{ e.preventDefault(); const name=document.getElementById('loginName').value.trim(), pw=document.getElementById('loginPw').value; const u=getUsers().find(u=>u.name===name&&u.pw===pw); if(!u){ alert('로그인 실패'); return;} login(name); };
     function login(name){ currentUser=name; localStorage.setItem('app_current',name); showApp(); }
     function logout(){ localStorage.removeItem('app_current'); currentUser=''; showAuth(); }
     document.getElementById('logout').onclick = logout;
@@ -138,15 +152,4 @@
     function countThisMonth(user,data,year,month){ return Object.entries(data).filter(([date,arr])=>{ if(!arr.includes(user)) return false; const [y,m]=date.split('-').map(Number); return y===year && m-1===month; }).length; }
 
     function renderCalendar(){ calBody.innerHTML=''; monthLabel.textContent=`${cur.getFullYear()}년 ${cur.getMonth()+1}월`; const first=new Date(cur.getFullYear(),cur.getMonth(),1).getDay(), days=new Date(cur.getFullYear(),cur.getMonth()+1,0).getDate(); let row=document.createElement('tr'); for(let i=0;i<first;i++) row.appendChild(makeCell('',true)); const data=getData(); for(let d=1; d<=days; d++){ if((first+d-1)%7===0&&d!==1){ calBody.appendChild(row); row=document.createElement('tr'); } const ds=`${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`, arr=data[ds]||[]; row.appendChild(makeCell(d,false,ds,arr)); } while(row.children.length<7) row.appendChild(makeCell('',true)); calBody.appendChild(row); updateSelectionUI(); }
-    function makeCell(day,disabled=false,ds='',arr=[]){ const td=document.createElement('td'); td.className=disabled?'disabled p-2':'p-2'; if(!disabled&&day){ if(arr.includes(currentUser)){ td.classList.add('bg-red-100'); td.onclick=()=>alert('이미 신청한 날짜입니다.'); } else{ td.classList.add('cursor-pointer','hover:bg-blue-50'); td.onclick=()=>toggleSelect(ds);} } td.innerHTML=disabled?'':`<div>${day}</div><div class="count text-sm text-gray-600">${arr.length}/3</div>`; return td; }
-    function toggleSelect(ds){ const idx=selected.indexOf(ds), data=getData(), existing=countThisMonth(currentUser,data,cur.getFullYear(),cur.getMonth()); if(idx>=0) selected.splice(idx,1); else{ if(selected.length>=3){ alert('최대 3일 선택 가능합니다.'); return;} if(existing+selected.length+1>8){ alert(`한 달 최대 8일(현재 ${existing}일) 초과`); return;} selected.push(ds);} updateSelectionUI(); }
-    function updateSelectionUI(){ document.querySelectorAll('#calendar td').forEach(td=>td.classList.remove('bg-blue-200')); selected.forEach(ds=>{ document.querySelectorAll('#calendar td').forEach(td=>{ if(td.innerText.startsWith(String(Number(ds.slice(-2))))) td.classList.add('bg-blue-200'); }); }); selDatesEl.textContent=selected.join(', ')||'없음'; selCountEl.textContent=selected.length; applyBtn.disabled=selected.length===0; }
-
-    function renderMyList(){ myList.innerHTML=''; const data=getData(); Object.keys(data).filter(date=>data[date].includes(currentUser)).sort().forEach(date=>{ const li=document.createElement('li'); li.className='flex justify-between items-center'; li.innerHTML=`<span>${date}</span><button class="text-red-500">X</button>`; li.querySelector('button').onclick=()=>{ if(!confirm('취소할까요?')) return; data[date]=data[date].filter(n=>n!==currentUser); if(data[date].length===0) delete data[date]; saveData(data); renderCalendar(); renderMyList(); }; myList.appendChild(li); }); }
-
-    ['click','keydown','mousemove'].forEach(evt=>document.addEventListener(evt,updateActivity));
-
-    if(currentUser){ updateActivity(); showApp(); } else showAuth();
-  </script>
-</body>
-</html>
+    function makeCell(day,disabled=false,ds='',arr=[]){ const td=document.createElement('td```
